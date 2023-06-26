@@ -2,9 +2,12 @@ package com.applitools.workshop;
 
 import com.applitools.eyes.BatchInfo;
 import com.applitools.eyes.TestResultsSummary;
+import com.applitools.eyes.selenium.BrowserType;
 import com.applitools.eyes.selenium.Configuration;
 import com.applitools.eyes.selenium.Eyes;
 import com.applitools.eyes.selenium.fluent.Target;
+import com.applitools.eyes.visualgrid.model.DeviceName;
+import com.applitools.eyes.visualgrid.model.ScreenOrientation;
 import com.applitools.eyes.visualgrid.services.RunnerOptions;
 import com.applitools.eyes.visualgrid.services.VisualGridRunner;
 import io.cucumber.java.*;
@@ -40,6 +43,12 @@ public class AcmeBankSteps {
         config = new Configuration();
         config.setApiKey(applitoolsApiKey);
         config.setBatch(batch);
+
+        config.addBrowser(800, 600, BrowserType.CHROME);
+        config.addBrowser(1600, 1200, BrowserType.FIREFOX);
+        config.addBrowser(1024, 768, BrowserType.SAFARI);
+        config.addDeviceEmulation(DeviceName.Pixel_2, ScreenOrientation.PORTRAIT);
+        config.addDeviceEmulation(DeviceName.Nexus_10, ScreenOrientation.LANDSCAPE);
     }
 
     @Before
