@@ -15,10 +15,12 @@ import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.regex.Pattern;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.remote.RemoteWebDriver;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -53,7 +55,7 @@ public class AcmeBankSteps {
 
     @Before
     public void openBrowserAndEyes(Scenario scenario) throws MalformedURLException {
-        driver = new ChromeDriver();
+        driver = new RemoteWebDriver(new URL(Eyes.getExecutionCloudURL()), new ChromeOptions());
 
         eyes = new Eyes(runner);
         eyes.setConfiguration(config);
