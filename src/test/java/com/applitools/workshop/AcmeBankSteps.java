@@ -1,54 +1,72 @@
 package com.applitools.workshop;
 
+import com.applitools.eyes.BatchInfo;
+import com.applitools.eyes.TestResultsSummary;
+import com.applitools.eyes.selenium.Configuration;
+import com.applitools.eyes.selenium.Eyes;
+import com.applitools.eyes.selenium.fluent.Target;
+import com.applitools.eyes.visualgrid.services.RunnerOptions;
+import com.applitools.eyes.visualgrid.services.VisualGridRunner;
 import io.cucumber.java.*;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import java.net.MalformedURLException;
-import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
 import java.util.regex.Pattern;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
-import org.openqa.selenium.support.ui.WebDriverWait;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 
 public class AcmeBankSteps {
   
+    private static String applitoolsApiKey;
+    private static BatchInfo batch;
+    private static Configuration config;
+    private static VisualGridRunner runner;
+
     private WebDriver driver;
-    private WebDriverWait wait;
+    private Eyes eyes;
+
+    @BeforeAll
+    public static void setUpConfigAndRunner() {
+        applitoolsApiKey = System.getenv("APPLITOOLS_API_KEY");
+
+        runner = new VisualGridRunner(new RunnerOptions().testConcurrency(5));
+        batch = new BatchInfo("Applitools Workshop: Selenium Java with Cucumber");
+
+        config = new Configuration();
+        config.setApiKey(applitoolsApiKey);
+        config.setBatch(batch);
+    }
 
     @Before
     public void openBrowserAndEyes(Scenario scenario) throws MalformedURLException {
         driver = new ChromeDriver();
-        wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+
+        eyes = new Eyes(runner);
+        eyes.setConfiguration(config);
+        eyes.open(driver, "ACME Bank Web App", scenario.getName());
     }
 
     @After
     public void cleanUpTest() {
+        eyes.closeAsync();
         driver.quit();
     }
 
-    private void waitForAppearance(By locator)
-    {
-        wait.until(d -> d.findElements(locator).size() > 0);
+    @AfterAll
+    public static void printResults() {
+        TestResultsSummary allTestResults = runner.getAllTestResults();
+        System.out.println(allTestResults);
     }
 
     @Given("the ACME Bank login page is displayed")
     public void theAcmeBankLoginPageIsDisplayed() {
         driver.get("https://demo.applitools.com");
-
-        waitForAppearance(By.cssSelector("div.logo-w"));
-        waitForAppearance(By.id("username"));
-        waitForAppearance(By.id("password"));
-        waitForAppearance(By.id("log-in"));
-        waitForAppearance(By.cssSelector("input.form-check-input"));
+        eyes.check(Target.window().fully().withName("Login page"));
     }
 
     @When("the user enters valid login credentials")
@@ -60,33 +78,13 @@ public class AcmeBankSteps {
 
     @Then("the ACME Bank main page is displayed")
     public void theAcmeBankMainPageIsDisplayed() {
-      
-        // Check various page elements
-        waitForAppearance(By.cssSelector("div.logo-w"));
-        waitForAppearance(By.cssSelector("div.element-search.autosuggest-search-activator > input"));
-        waitForAppearance(By.cssSelector("div.avatar-w img"));
-        waitForAppearance(By.cssSelector("ul.main-menu"));
-        waitForAppearance(By.xpath("//a/span[.='Add Account']"));
-        waitForAppearance(By.xpath("//a/span[.='Make Payment']"));
-        waitForAppearance(By.xpath("//a/span[.='View Statement']"));
-        waitForAppearance(By.xpath("//a/span[.='Request Increase']"));
-        waitForAppearance(By.xpath("//a/span[.='Pay Now']"));
 
+        // Check the visuals of the page
+        eyes.check(Target.window().fully().withName("Main page").layout());
+        
         // Check time message
         assertTrue(Pattern.matches(
                 "Your nearest branch closes in:( \\d+[hms])+",
                 driver.findElement(By.id("time")).getText()));
-
-        // Check menu element names
-        List<WebElement> menuElements = driver.findElements(By.cssSelector("ul.main-menu li span"));
-        List<String> menuItems = menuElements.stream().map(i -> i.getText().toLowerCase()).toList();
-        List<String> expected = Arrays.asList("card types", "credit cards", "debit cards", "lending", "loans", "mortgages");
-        assertEquals(expected, menuItems);
-
-        // Check transaction statuses
-        List<WebElement> statusElements = driver.findElements(By.xpath("//td[./span[contains(@class, 'status-pill')]]/span[2]"));
-        List<String> statusNames = statusElements.stream().map(n -> n.getText().toLowerCase()).toList();
-        List<String> acceptableNames = Arrays.asList("complete", "pending", "declined");
-        assertTrue(acceptableNames.containsAll(statusNames));
     }
 }
