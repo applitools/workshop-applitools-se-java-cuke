@@ -1,1 +1,1 @@
-Feature: Acme Bank
+Feature: ACME Bank
